@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -22,7 +24,7 @@ android {
     // Clé de signature : gardée HORS de GitHub (fichier keystore.properties + salatlock.keystore).
     // Sans elle, impossible de publier des mises à jour qui s'installent par-dessus.
     val ksFile = rootProject.file("keystore.properties")
-    val ks = java.util.Properties().apply { if (ksFile.exists()) ksFile.inputStream().use { load(it) } }
+    val ks = Properties().apply { if (ksFile.exists()) ksFile.inputStream().use { load(it) } }
     signingConfigs {
         create("shared") {
             storeFile = file(ks.getProperty("storeFile", "salatlock.keystore"))
