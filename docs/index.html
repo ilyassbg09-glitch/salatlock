@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Salat Lock</title>
+<meta name="description" content="Ton téléphone se bloque tant que tu n'as pas prié. Scanne un lavabo, prie, c'est débloqué. Gratuit, sans pub, sans pistage.">
+<meta property="og:title" content="Salat Lock 🕌 — Ne rate plus jamais une prière">
+<meta property="og:description" content="Le téléphone se bloque à l'heure de la prière. Pour débloquer : scanne un lavabo, puis prie. Gratuit, sans pub.">
+<meta name="theme-color" content="#0B3D2E">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230B3D2E'/><text x='50' y='70' font-size='60' text-anchor='middle'>🕌</text></svg>">
+<style>
+  :root {
+    --bg: #062018; --bg2: #0B3D2E; --card: #12382B; --gold: #E8C468; --text: #F3F7F5;
+    --muted: #A9C2B7; --green: #2E9E6B; --line: rgba(232,196,104,.25);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(1200px 600px at 50% -10%, #145a43 0%, var(--bg2) 40%, var(--bg) 100%) fixed;
+    color: var(--text); line-height: 1.55;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 18px 0; }
+  .logo { font-weight: 800; font-size: 20px; color: var(--gold); text-decoration: none; }
+  .nav a { color: var(--muted); text-decoration: none; margin-left: 18px; font-size: 15px; }
+  .hero { display: grid; grid-template-columns: 1.1fr .9fr; gap: 40px; align-items: center; padding: 40px 0 60px; }
+  .ar { font-size: 22px; color: var(--gold); margin: 0 0 6px; }
+  h1 { font-size: clamp(32px, 5vw, 52px); line-height: 1.1; margin: 0 0 16px; }
+  h1 span { color: var(--gold); }
+  .lead { font-size: 19px; color: var(--muted); margin: 0 0 28px; max-width: 34em; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px; background: var(--gold); color: #10291F;
+    font-weight: 800; font-size: 18px; padding: 16px 28px; border-radius: 999px; text-decoration: none;
+    box-shadow: 0 10px 30px rgba(232,196,104,.25); transition: transform .15s;
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--line); box-shadow: none; font-size: 16px; padding: 14px 22px; }
+  .small { font-size: 14px; color: var(--muted); margin-top: 12px; }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+  .badge { border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font-size: 14px; color: var(--muted); }
+
+  /* Téléphone */
+  .phone {
+    width: 270px; height: 560px; margin: 0 auto; border-radius: 42px; padding: 12px;
+    background: #0a0f0d; box-shadow: 0 30px 80px rgba(0,0,0,.5), inset 0 0 0 2px #2a3a33;
+  }
+  .screen {
+    height: 100%; border-radius: 32px; overflow: hidden; text-align: center; padding: 34px 18px 18px;
+    background: linear-gradient(#0B3D2E, #041A12); display: flex; flex-direction: column; align-items: center;
+  }
+  .screen .em { font-size: 46px; }
+  .screen .t1 { color: var(--gold); font-size: 24px; font-weight: 800; margin-top: 4px; }
+  .screen .t2 { font-weight: 700; margin-top: 4px; }
+  .screen .t3 { color: var(--muted); font-size: 13px; }
+  .screen .q { background: #1A4D3D; border-radius: 14px; padding: 10px 12px; font-size: 12px; text-align: left; margin-top: 16px; }
+  .screen .b { background: var(--gold); color: #10291F; font-weight: 800; border-radius: 999px; padding: 11px; width: 100%; margin-top: auto; font-size: 14px; }
+  .screen .row { display: flex; gap: 8px; width: 100%; margin-top: 8px; }
+  .screen .row div { flex: 1; background: #1A4D3D; border-radius: 999px; padding: 9px 0; font-size: 12px; }
+
+  section { padding: 56px 0; }
+  h2 { font-size: clamp(26px, 3.5vw, 36px); margin: 0 0 8px; }
+  .sub { color: var(--muted); margin: 0 0 28px; }
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .card { background: var(--card); border: 1px solid rgba(255,255,255,.06); border-radius: 20px; padding: 22px; }
+  .card .n { width: 34px; height: 34px; border-radius: 50%; background: var(--gold); color: #10291F; font-weight: 800; display: grid; place-items: center; margin-bottom: 12px; }
+  .card h3 { margin: 0 0 6px; font-size: 18px; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+  .feats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .feats .ic { font-size: 28px; margin-bottom: 8px; }
+  ol.install { counter-reset: s; list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+  ol.install li { counter-increment: s; background: var(--card); border-radius: 16px; padding: 16px 18px 16px 60px; position: relative; }
+  ol.install li::before { content: counter(s); position: absolute; left: 16px; top: 14px; width: 30px; height: 30px; border-radius: 50%; background: var(--gold); color: #10291F; font-weight: 800; display: grid; place-items: center; }
+  ol.install b { color: var(--gold); }
+  details { background: var(--card); border-radius: 16px; padding: 16px 18px; margin-bottom: 10px; }
+  summary { cursor: pointer; font-weight: 700; }
+  details p { color: var(--muted); margin: 10px 0 0; }
+  .cta { text-align: center; background: linear-gradient(135deg, #145a43, #0B3D2E); border: 1px solid var(--line); border-radius: 28px; padding: 44px 20px; }
+  footer { text-align: center; color: var(--muted); font-size: 14px; padding: 30px 0 50px; }
+  footer a { color: var(--muted); }
+
+  @media (max-width: 860px) {
+    .hero { grid-template-columns: 1fr; text-align: center; padding-top: 16px; }
+    .lead { margin-left: auto; margin-right: auto; }
+    .badges { justify-content: center; }
+    .steps { grid-template-columns: 1fr 1fr; }
+    .feats { grid-template-columns: 1fr; }
+    .nav { display: none; }
+  }
+  @media (max-width: 480px) { .steps { grid-template-columns: 1fr; } .btn { width: 100%; justify-content: center; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="logo" href="#">🕌 Salat Lock</a>
+    <nav class="nav"><a href="#comment">Comment ça marche</a><a href="#installer">Installer</a><a href="#faq">Questions</a></nav>
+  </header>
+
+  <div class="hero">
+    <div>
+      <p class="ar">حافظوا على الصلوات</p>
+      <h1>Ton téléphone se bloque <span>tant que tu n'as pas prié.</span></h1>
+      <p class="lead">À l'heure de la prière, Salat Lock bloque ton téléphone. Pour le débloquer : fais tes ablutions, scanne un lavabo, et prie pendant le compte à rebours.</p>
+      <a class="btn" href="SalatLock.apk" download id="dl">⬇️ Télécharger pour Android</a>
+      <p class="small">Gratuit · <span id="ver">Version 1.1</span> · 13 Mo · Android 8 ou plus récent</p>
+      <div class="badges">
+        <span class="badge">🚫 Sans pub</span><span class="badge">🔒 Sans pistage</span>
+        <span class="badge">📴 Marche sans internet</span><span class="badge">🇫🇷 En français</span>
+      </div>
+    </div>
+    <div class="phone" aria-hidden="true">
+      <div class="screen">
+        <div class="em">🕌</div>
+        <div class="t1">حان وقت الصلاة</div>
+        <div class="t2">C'est l'heure de Asr · العصر</div>
+        <div class="t3">Adhan à 15:42</div>
+        <div class="q">« La prière demeure, pour les croyants, une prescription à des temps déterminés. »<br><span style="color:#A9C2B7">— An-Nisâ' 4:103</span></div>
+        <div class="b">🚰 Scanner un lavabo</div>
+        <div class="row"><div>📞 Urgence</div><div>⏸ Pause 5 min</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section id="comment">
+  <div class="wrap">
+    <h2>Comment ça marche</h2>
+    <p class="sub">Simple, et impossible de « juste remettre à plus tard ».</p>
+    <div class="steps">
+      <div class="card"><div class="n">1</div><h3>L'adhan</h3><p>Une notification te prévient : il te reste 15 minutes (réglable).</p></div>
+      <div class="card"><div class="n">2</div><h3>Le blocage</h3><p>Si tu n'as pas prié, un écran recouvre toutes les applis.</p></div>
+      <div class="card"><div class="n">3</div><h3>Le lavabo</h3><p>Fais tes ablutions et montre le lavabo à la caméra. Marche partout : maison, mosquée, travail.</p></div>
+      <div class="card"><div class="n">4</div><h3>La prière</h3><p>Un compte à rebours de 10 min démarre, avec la Qibla. À la fin, c'est débloqué.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Tout ce qu'il faut</h2>
+    <p class="sub">Pensé pour t'aider, pas pour te piéger.</p>
+    <div class="feats">
+      <div class="card"><div class="ic">🕐</div><h3>Heures exactes</h3><p>Calculées sur ton téléphone pour ta ville. Méthodes France (UOIF, Mosquée de Paris), Maroc, Algérie, Tunisie, La Mecque…</p></div>
+      <div class="card"><div class="ic">🧭</div><h3>Qibla</h3><p>Une boussole qui devient verte quand tu es bien tourné vers la Kaaba.</p></div>
+      <div class="card"><div class="ic">🔥</div><h3>Ta série</h3><p>Compte les jours d'affilée sans rater une prière. Motivant, surtout en Ramadan.</p></div>
+      <div class="card"><div class="ic">📞</div><h3>Jamais coincé</h3><p>Les appels passent toujours, bouton Urgence 112, et 3 pauses de 5 min par jour.</p></div>
+      <div class="card"><div class="ic">🌙</div><h3>Mode dispense</h3><p>Règles, maladie, voyage : désactive le blocage pour quelques jours.</p></div>
+      <div class="card"><div class="ic">📖</div><h3>Rappels</h3><p>Versets, hadiths et l'invocation après les ablutions, en arabe et en français.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="installer">
+  <div class="wrap">
+    <h2>Installer en 2 minutes</h2>
+    <p class="sub">L'app n'est pas encore sur le Play Store : on l'installe directement, c'est normal.</p>
+    <ol class="install">
+      <li>Appuie sur <b>Télécharger pour Android</b> en haut de la page.</li>
+      <li>Ouvre le fichier <b>SalatLock.apk</b> (notification « Téléchargement terminé », ou app <b>Fichiers</b> → <b>Téléchargements</b>).</li>
+      <li>Si Android bloque : appuie sur <b>Paramètres</b> → active <b>Autoriser cette source</b> → reviens en arrière.</li>
+      <li>Appuie sur <b>Installer</b>. Si Play Protect avertit : <b>Plus de détails</b> → <b>Installer quand même</b>.</li>
+      <li>Ouvre Salat Lock, choisis ta ville et suis la liste <b>Configuration</b>. Puis appuie sur <b>🧪 Tester</b>.</li>
+    </ol>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <h2>Questions</h2>
+    <p class="sub">&nbsp;</p>
+    <details><summary>Pourquoi Android me dit que l'app est « inconnue » ?</summary><p>Parce qu'elle ne vient pas du Play Store. Android affiche ce message pour toutes les apps installées comme ça. Salat Lock ne contient ni pub ni pistage et fonctionne sans internet.</p></details>
+    <details><summary>Et sur iPhone ?</summary><p>Pas encore. Apple ne permet pas ce type de blocage gratuitement ; une version iPhone arrive bientôt, in shaa Allah.</p></details>
+    <details><summary>Le lavabo n'est pas reconnu, que faire ?</summary><p>Recule un peu pour avoir tout le lavabo dans le cadre, avec de la lumière. Tu peux aussi monter la sensibilité dans les Réglages.</p></details>
+    <details><summary>Et si j'ai une urgence ?</summary><p>Les appels entrants ne sont jamais bloqués, le bouton Urgence appelle le 112, et tu as 3 pauses de 5 minutes par jour.</p></details>
+    <details><summary>Les heures ne correspondent pas à ma mosquée.</summary><p>Dans Réglages, change la méthode de calcul (par exemple UOIF 12° ou Mosquée de Paris en France, Habous au Maroc).</p></details>
+    <details><summary>Comment avoir les mises à jour ?</summary><p>L'app te prévient toute seule quand une nouvelle version est disponible. Elle s'installe par-dessus, tes réglages et ta série sont gardés.</p></details>
+  </div>
+</section>
+
+<div class="wrap">
+  <div class="cta">
+    <h2>Ne rate plus jamais une prière</h2>
+    <p class="sub">Installe-la, et partage-la à ceux que tu aimes.</p>
+    <a class="btn" href="SalatLock.apk" download>⬇️ Télécharger pour Android</a>
+    <p class="small"><a class="btn ghost" href="#" id="share" style="margin-top:12px">📤 Partager le lien</a></p>
+  </div>
+</div>
+
+<footer class="wrap">Salat Lock · Fait avec ❤️ · Sans pub, sans pistage</footer>
+
+<script>
+  // Affiche la version publiée et active le bouton de partage.
+  fetch('version.json?t=' + Date.now()).then(r => r.json()).then(v => {
+    document.getElementById('ver').textContent = 'Version ' + v.versionName;
+  }).catch(() => {});
+  document.getElementById('share').addEventListener('click', e => {
+    e.preventDefault();
+    const data = { title: 'Salat Lock', text: "Le téléphone se bloque tant que tu n'as pas prié 🕌 Gratuit, sans pub :", url: location.href.split('#')[0] };
+    if (navigator.share) navigator.share(data).catch(() => {});
+    else { navigator.clipboard.writeText(data.url); e.target.textContent = '✅ Lien copié'; }
+  });
+</script>
+</body>
+</html>

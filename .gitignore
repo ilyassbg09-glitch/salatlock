@@ -1,0 +1,10 @@
+# NE JAMAIS publier la clé de signature
+*.keystore
+*.jks
+keystore.properties
+local.properties
+.gradle/
+build/
+app/build/
+.idea/
+*.iml
