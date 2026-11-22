@@ -96,6 +96,7 @@ class Prefs(ctx: Context) {
     fun markDone(day: String, p: Prayer) {
         if (isDone(day, p)) return
         sp.edit().putBoolean("done_${day}_${p.name}", true).putInt("total", total + 1).commit()
+        queuePrayer(day, p)
     }
     val total get() = sp.getInt("total", 0)
 
@@ -140,9 +141,50 @@ class Prefs(ctx: Context) {
         sp.edit().putString("emg_day", today).putInt("emg_n", used + 1).commit()
     }
 
+    // ---- File d'envoi vers le classement (fonctionne hors ligne) ----
+    fun queuePrayer(day: String, p: Prayer) { sp.edit().putStringSet("q_pr", queuedPrayers() + "$day|${p.name}").apply() }
+    fun queuedPrayers(): Set<String> = sp.getStringSet("q_pr", emptySet())!!.toSet()
+    fun unqueuePrayer(item: String) { sp.edit().putStringSet("q_pr", queuedPrayers() - item).apply() }
+    fun queueExcused(day: String) { sp.edit().putStringSet("q_ex", queuedExcused() + day).apply() }
+    fun queuedExcused(): Set<String> = sp.getStringSet("q_ex", emptySet())!!.toSet()
+    fun unqueueExcused(day: String) { sp.edit().putStringSet("q_ex", queuedExcused() - day).apply() }
+    fun clearQueue() { sp.edit().remove("q_pr").remove("q_ex").apply() }
+
+    // ---- Contrat d'engagement ----
+    var contractDate: Long
+        get() = sp.getLong("contract_date", 0)
+        set(v) { sp.edit().putLong("contract_date", v).apply() }
+    var contractName: String
+        get() = sp.getString("contract_name", "") ?: ""
+        set(v) { sp.edit().putString("contract_name", v).apply() }
+    val contractSigned get() = contractDate > 0
+
+    // ---- Adhan ----
+    var adhanEnabled: Boolean
+        get() = sp.getBoolean("adhan", true)
+        set(v) { sp.edit().putBoolean("adhan", v).apply() }
+    var adhanAtFajr: Boolean
+        get() = sp.getBoolean("adhan_fajr", false)
+        set(v) { sp.edit().putBoolean("adhan_fajr", v).apply() }
+    var adhanInSilent: Boolean
+        get() = sp.getBoolean("adhan_silent", false)
+        set(v) { sp.edit().putBoolean("adhan_silent", v).apply() }
+
     var quoteIndex: Int
         get() = sp.getInt("quote", 0)
         set(v) { sp.edit().putInt("quote", v).apply() }
 
-    companion object { const val MAX_EMERGENCY = 3 }
+    // ---- Appels d'urgence « avec déblocage 3 min » (2 par jour) ----
+    fun emergencyCallsLeft(): Int {
+        val today = LocalDate.now().toString()
+        val used = if (sp.getString("call_day", "") == today) sp.getInt("call_n", 0) else 0
+        return (MAX_CALLS - used).coerceAtLeast(0)
+    }
+    fun useEmergencyCall() {
+        val today = LocalDate.now().toString()
+        val used = if (sp.getString("call_day", "") == today) sp.getInt("call_n", 0) else 0
+        sp.edit().putString("call_day", today).putInt("call_n", used + 1).commit()
+    }
+
+    companion object { const val MAX_EMERGENCY = 3; const val MAX_CALLS = 2 }
 }

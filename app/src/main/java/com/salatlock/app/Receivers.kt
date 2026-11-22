@@ -13,8 +13,8 @@ class AlarmReceiver : BroadcastReceiver() {
             prefs.isPrayerEnabled(p) && !prefs.isDone(day, p)
         ) {
             when (intent.getIntExtra("type", 0)) {
-                Scheduler.TYPE_NOTIFY -> Notifs.adhan(ctx, p, day, prefs.graceMin)
-                Scheduler.TYPE_LOCK -> Scheduler.lock(ctx, p, day)
+                Scheduler.TYPE_NOTIFY -> { Notifs.adhan(ctx, p, day, prefs.graceMin); AdhanService.maybePlay(ctx, p) }
+                Scheduler.TYPE_LOCK -> { if (prefs.graceMin == 0) AdhanService.maybePlay(ctx, p); Scheduler.lock(ctx, p, day) }
             }
         }
         Scheduler.reschedule(ctx)

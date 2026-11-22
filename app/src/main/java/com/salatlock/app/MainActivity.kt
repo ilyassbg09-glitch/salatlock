@@ -32,6 +32,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         prefs = Prefs(this)
+        if (!prefs.contractSigned) {
+            startActivity(Intent(this, ContractActivity::class.java)); finish(); return
+        }
         Notifs.channels(this)
         content = vbox().apply { setPadding(dp(18), dp(36), dp(18), dp(36)) }
         setContentView(ScrollView(this).apply { background = bgGradient(); addView(content) })
@@ -42,6 +45,7 @@ class MainActivity : ComponentActivity() {
         Scheduler.reschedule(this)
         handler.post(refresher)
         UpdateChecker.check(this) { build() }
+        Cloud.dailyPing(this)
     }
 
     override fun onPause() {
@@ -101,9 +105,17 @@ class MainActivity : ComponentActivity() {
         content.add(button("🚰 Je vais prier maintenant") { prayNow() }, top = 20)
         content.add(label("Tu peux prier avant le blocage : scanne un lavabo et la prière est comptée.", 13f, C.MUTED), top = 6)
 
-        val q = QiblaView(this)
+        content.add(button("🏆 Classement en ligne") { startActivity(Intent(this, LeaderboardActivity::class.java)) }, top = 16)
+
         content.add(label("Direction de la Qibla", 16f, C.GOLD, bold = true), top = 24)
+        val qInfo = label("", 14f, C.MUTED)
+        val q = QiblaView(this).apply {
+            onStatus = { ok, hint -> qInfo.text = (if (!qibla.isNaN()) "Qibla : ${qibla.toInt()}° depuis le nord" else "") +
+                (hint?.let { "\n$it" } ?: if (ok) "\n✅ Tu es face à la Qibla" else "\nTiens le téléphone à plat ou devant toi") }
+        }
+        if (!q.qibla.isNaN()) qInfo.text = "Qibla : ${q.qibla.toInt()}° depuis le nord"
         content.add(q, top = 6, w = dp(240), h = dp(240))
+        content.add(qInfo, top = 2)
 
         val row = hbox()
         row.add(button("⚙️ Réglages", C.CARD, C.WHITE, 15f) { openSettings() }, w = 0, weight = 1f)
@@ -111,6 +123,7 @@ class MainActivity : ComponentActivity() {
         row.add(button("🧪 Tester", C.CARD, C.WHITE, 15f) { testLock() }, w = 0, weight = 1f)
         content.add(row, top = 20)
         content.add(button("🌙 Mode dispense (règles, maladie…)", C.CARD, C.WHITE, 15f) { excusedDialog() }, top = 10)
+        content.add(button("📜 Mon engagement", C.CARD, C.WHITE, 15f) { startActivity(Intent(this, ContractActivity::class.java)) }, top = 10)
         content.add(button("📤 Partager l'app à un proche", C.CARD, C.WHITE, 15f) { share() }, top = 10)
         content.add(label("Version ${BuildConfig.VERSION_NAME} · sans pub · sans pistage", 12f, C.MUTED), top = 16)
     }

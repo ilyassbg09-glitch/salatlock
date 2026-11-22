@@ -207,7 +207,7 @@ class LockService : Service() {
         col.add(label("Fais tes ablutions, montre un lavabo à la caméra,\npuis prie pendant le compte à rebours.", 14f, C.MUTED), top = 10)
 
         val row = hbox()
-        row.add(button("📞 Urgence", C.CARD, C.WHITE, 15f) { emergencyCall() }, w = 0, weight = 1f)
+        row.add(button("📞 Urgence (${prefs.emergencyCallsLeft()})", C.CARD, C.WHITE, 15f) { emergencyCall() }, w = 0, weight = 1f)
         row.addView(View(this), lp(dp(10), 1))
         val left = prefs.emergencyLeft()
         val pause = button("⏸ Pause 5 min ($left)", C.CARD, if (left > 0) C.WHITE else C.MUTED, 15f) {
@@ -216,6 +216,7 @@ class LockService : Service() {
         setupLongHold(pause) { emergencyPause() }
         row.add(pause, w = 0, weight = 1f)
         col.add(row, top = 28)
+        if (prefs.contractSigned) col.add(label("✍️ Tu t'es engagé le ${ContractActivity.dateText(this)} à faire tout ton possible pour prier à l'heure.", 13f, C.MUTED), top = 14)
 
         if (prefs.lockIsTest) {
             col.add(button("Terminer le test", C.RED, C.WHITE, 15f) {
@@ -239,7 +240,7 @@ class LockService : Service() {
 
         val qText = label("Tourne-toi : la flèche dorée indique la Qibla", 14f, C.MUTED)
         val qibla = QiblaView(this).apply {
-            onAligned = { ok -> qText.text = if (ok) "✅ Tu es face à la Qibla" else "Tourne-toi : la flèche dorée indique la Qibla" }
+            onStatus = { ok, hint -> qText.text = hint ?: if (ok) "✅ Tu es face à la Qibla" else "Tourne-toi : la flèche dorée indique la Qibla" }
         }
         col.add(qibla, top = 16, w = dp(230), h = dp(230))
         col.add(qText, top = 4)
@@ -269,6 +270,7 @@ class LockService : Service() {
             if (p != null && day != null) prefs.markDone(day, p)
             prefs.clearLock()
             val s = prefs.streak()
+            Cloud.bg({ Cloud.flush(this) })
             Notifs.info(this, "تقبل الله — Qu'Allah accepte ta prière 🤲",
                 (if (p != null) "${p.fr} faite. " else "") + "Série : $s jour(s) 🔥 · Total : ${prefs.total} prières")
         } else {
@@ -287,6 +289,7 @@ class LockService : Service() {
     }
 
     private fun openScan() {
+        AdhanService.stop(this)
         scanUntil = System.currentTimeMillis() + 3 * 60_000L
         removeOverlay()
         val i = Intent(this, ScanActivity::class.java)
@@ -298,7 +301,12 @@ class LockService : Service() {
     }
 
     private fun emergencyCall() {
-        hiddenUntil = System.currentTimeMillis() + 3 * 60_000L
+        // 2 fois par jour : 3 minutes sans blocage. Au-delà, on peut TOUJOURS appeler
+        // (sécurité), mais le blocage revient après 45 s, sauf pendant un appel en cours.
+        val withUnlock = prefs.emergencyCallsLeft() > 0
+        if (withUnlock) prefs.useEmergencyCall()
+        hiddenUntil = System.currentTimeMillis() + if (withUnlock) 3 * 60_000L else 45_000L
+        if (!withUnlock) Toasts.show(this, "Appel d'urgence possible. Le blocage revient dans 45 s (sauf pendant un appel).")
         removeOverlay()
         try {
             startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:112")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -312,7 +320,8 @@ class LockService : Service() {
         prefs.useEmergency()
         hiddenUntil = System.currentTimeMillis() + 5 * 60_000L
         removeOverlay()
-        Toasts.show(this, "Pause de 5 minutes. Le blocage revient ensuite.")
+        val rappel = if (prefs.contractSigned) " Rappel : tu t'es engagé le ${ContractActivity.dateText(this)} ✍️" else ""
+        Toasts.show(this, "Pause de 5 minutes. Le blocage revient ensuite.$rappel")
     }
 
     @SuppressLint("ClickableViewAccessibility")

@@ -119,6 +119,18 @@ class SettingsActivity : ComponentActivity() {
         content.add(slider("Sensibilité du scan du lavabo", 0, 100, prefs.sensitivity, "%") { prefs.sensitivity = it }, top = 8)
         content.add(label("Si le lavabo n'est pas reconnu, augmente la sensibilité.", 12f, C.MUTED, gravity = Gravity.START), top = 2)
 
+        section("🔊 Adhan")
+        content.add(switch("Jouer l'adhan à l'heure de la prière", prefs.adhanEnabled) { prefs.adhanEnabled = it }, top = 4)
+        content.add(switch("Aussi à Fajr", prefs.adhanAtFajr) { prefs.adhanAtFajr = it }, top = 2)
+        content.add(label("Je n'ai pas encore d'adhan de Fajr libre de droits (avec « as-salâtu khayrun min an-nawm »). Si tu actives cette option, c'est l'adhan habituel qui sera joué.", 12f, C.MUTED, gravity = Gravity.START), top = 2)
+        content.add(switch("Même en mode silencieux / vibreur", prefs.adhanInSilent) { prefs.adhanInSilent = it }, top = 2)
+        val ad = hbox()
+        ad.add(button("▶️ Écouter", C.CARD, C.WHITE, 15f) { AdhanService.preview(this) }, w = 0, weight = 1f)
+        ad.addView(View(this), lp(dp(10), 1))
+        ad.add(button("⏹ Arrêter", C.CARD, C.WHITE, 15f) { AdhanService.stop(this) }, w = 0, weight = 1f)
+        content.add(ad, top = 8)
+        content.add(label("Un adhan différent chaque jour. Le volume suit le volume « médias » du téléphone.", 12f, C.MUTED, gravity = Gravity.START), top = 4)
+
         section("🕌 Prières qui bloquent le téléphone")
         for (p in Prayer.values()) {
             content.add(CheckBox(this).apply {
@@ -132,10 +144,22 @@ class SettingsActivity : ComponentActivity() {
         section("ℹ️ À savoir")
         content.add(label(
             "• Les appels entrants et le bouton Urgence (112) ne sont jamais bloqués.\n" +
+            "• Bouton Urgence : 2 fois par jour avec 3 min sans blocage. Au-delà, appeler reste toujours possible (le blocage revient après 45 s, sauf pendant un appel).\n" +
             "• 3 pauses d'urgence de 5 min par jour (appui long 3 s).\n" +
+            "• Après le scan du lavabo : au moins 3 min de prière avant le déblocage.\n" +
             "• Tout fonctionne sans internet : heures, Qibla et reconnaissance du lavabo.\n" +
-            "• Vérifie tes heures avec ta mosquée et change la méthode si besoin.",
+            "• Vérifie tes heures avec ta mosquée et change la méthode si besoin.\n" +
+            "• Classement : seuls ton pseudo, ta série et ton nombre de prières sont envoyés, et seulement si tu le rejoins. Un compteur anonyme d'installations est aussi envoyé (aucune donnée personnelle).",
             14f, C.MUTED, gravity = Gravity.START), top = 6)
+
+        section("🎙️ Crédits des adhans")
+        content.add(label(
+            "Enregistrements libres de droits, venant de Wikimedia Commons :\n" +
+            "• « Beautiful adhan » — Adam-synagda — CC0 (domaine public)\n" +
+            "• « Azan » — Andrewler — CC BY-SA 4.0 (coupé avant la dua)\n" +
+            "• « The Adhan - Muslim Call to Prayer » — Atcovi (récitation d'Aaqib Azeez) — CC BY-SA 4.0\n" +
+            "Les versions modifiées (volume, coupe) sont diffusées sous la même licence CC BY-SA 4.0.",
+            13f, C.MUTED, gravity = Gravity.START), top = 6)
     }
 
     private fun locText() =

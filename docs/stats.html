@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Salat Lock · Stats</title>
+<style>
+  :root { --bg:#062018; --card:#12382B; --gold:#E8C468; --text:#F3F7F5; --muted:#A9C2B7; --line:rgba(255,255,255,.08); }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 24px 16px 60px; }
+  h1 { color: var(--gold); margin: 0 0 4px; font-size: 26px; }
+  .sub { color: var(--muted); margin: 0 0 20px; font-size: 14px; }
+  .login { background: var(--card); border-radius: 18px; padding: 20px; }
+  input { width: 100%; font-size: 18px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: #0b2a20; color: var(--text); letter-spacing: 2px; }
+  button { margin-top: 10px; width: 100%; font-size: 17px; font-weight: 800; padding: 13px; border: 0; border-radius: 999px; background: var(--gold); color: #10291F; cursor: pointer; }
+  .err { color: #ff8a80; margin-top: 10px; min-height: 1em; }
+  .tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .tile { background: var(--card); border-radius: 18px; padding: 16px; }
+  .tile .v { font-size: 34px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
+  .tile .l { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .tile.hero { grid-column: 1 / -1; }
+  .tile.hero .v { font-size: 52px; color: var(--gold); }
+  .tile.hero .l span { color: var(--text); }
+  h2 { font-size: 17px; margin: 26px 0 10px; }
+  .chart { background: var(--card); border-radius: 18px; padding: 16px 12px 10px; position: relative; }
+  .bars { display: flex; align-items: flex-end; gap: 2px; height: 160px; border-bottom: 1px solid var(--line); }
+  .bar { flex: 1; display: flex; align-items: flex-end; height: 100%; cursor: default; }
+  .bar i { display: block; width: 100%; background: var(--gold); border-radius: 4px 4px 0 0; min-height: 2px; }
+  .bar.zero i { background: var(--line); }
+  .bar:hover i { filter: brightness(1.15); }
+  .axis { display: flex; justify-content: space-between; color: var(--muted); font-size: 11px; margin-top: 6px; }
+  .tip { position: absolute; pointer-events: none; background: #0b2a20; border: 1px solid var(--line); color: var(--text); font-size: 13px; padding: 6px 10px; border-radius: 10px; opacity: 0; transform: translate(-50%, -110%); white-space: nowrap; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  td { padding: 8px 4px; border-bottom: 1px solid var(--line); }
+  td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+  .muted { color: var(--muted); font-size: 12px; margin-top: 14px; }
+  a { color: var(--muted); }
+  #dash { display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>📊 Statistiques</h1>
+  <p class="sub">Salat Lock · compteur anonyme (aucune donnée personnelle)</p>
+
+  <div class="login" id="login">
+    <label for="code" style="display:block;margin-bottom:8px">Code secret</label>
+    <input id="code" autocomplete="off" autocapitalize="characters" placeholder="XXXXXXXXXX">
+    <button id="go">Voir les stats</button>
+    <div class="err" id="err"></div>
+  </div>
+
+  <div id="dash">
+    <div class="tiles">
+      <div class="tile hero"><div class="v" id="installs">–</div><div class="l">installations au total · <span id="split"></span></div></div>
+      <div class="tile"><div class="v" id="a1">–</div><div class="l">actifs aujourd'hui</div></div>
+      <div class="tile"><div class="v" id="a7">–</div><div class="l">actifs sur 7 jours</div></div>
+      <div class="tile"><div class="v" id="a30">–</div><div class="l">actifs sur 30 jours</div></div>
+      <div class="tile"><div class="v" id="players">–</div><div class="l">joueurs au classement</div></div>
+      <div class="tile"><div class="v" id="ptoday">–</div><div class="l">prières validées aujourd'hui</div></div>
+      <div class="tile"><div class="v" id="ptotal">–</div><div class="l">prières validées au total</div></div>
+    </div>
+
+    <h2>Nouvelles installations par jour (30 jours)</h2>
+    <div class="chart" id="chart">
+      <div class="bars" id="bars"></div>
+      <div class="axis"><span id="ax0"></span><span id="ax1"></span></div>
+      <div class="tip" id="tip"></div>
+    </div>
+
+    <h2>Versions utilisées (30 jours)</h2>
+    <div class="chart"><table id="versions"></table></div>
+
+    <p class="muted">Mis à jour à chaque ouverture de cette page. <a href="#" id="logout">Se déconnecter</a></p>
+  </div>
+</div>
+<script>
+  const URL_BASE = 'https://efagehkrrahnjshhvdhp.supabase.co';
+  const KEY = 'sb_publishable_zsoHntdsdW6lfKKK6HHsIw_mWlpSzgc';
+  const $ = id => document.getElementById(id);
+  const fmt = n => Number(n).toLocaleString('fr-FR');
+  const store = { get() { try { return localStorage.getItem('sl_stats') || ''; } catch { return ''; } },
+                  set(v) { try { v ? localStorage.setItem('sl_stats', v) : localStorage.removeItem('sl_stats'); } catch {} } };
+
+  async function load(code) {
+    $('err').textContent = 'Chargement…';
+    try {
+      const r = await fetch(URL_BASE + '/rest/v1/rpc/stats', { method: 'POST',
+        headers: { apikey: KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_code: code }) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.message || 'Erreur');
+      store.set(code); show(d);
+    } catch (e) {
+      $('err').textContent = e.message === 'code incorrect' ? 'Code incorrect' : 'Erreur : ' + e.message;
+      $('login').style.display = ''; $('dash').style.display = 'none';
+    }
+  }
+
+  function show(d) {
+    $('login').style.display = 'none'; $('dash').style.display = 'block';
+    $('installs').textContent = fmt(d.installs);
+    $('split').textContent = `🤖 ${fmt(d.android)} Android · 🍎 ${fmt(d.ios)} iPhone`;
+    $('a1').textContent = fmt(d.active_today); $('a7').textContent = fmt(d.active_7d); $('a30').textContent = fmt(d.active_30d);
+    $('players').textContent = fmt(d.players); $('ptoday').textContent = fmt(d.prayers_today); $('ptotal').textContent = fmt(d.prayers_total);
+    // 30 derniers jours, jours sans installation compris
+    const map = Object.fromEntries((d.new_per_day || []).map(x => [x.day, x.n]));
+    const days = [];
+    for (let i = 29; i >= 0; i--) { const t = new Date(); t.setDate(t.getDate() - i); days.push(t.toISOString().slice(0, 10)); }
+    const max = Math.max(1, ...days.map(k => map[k] || 0));
+    const bars = $('bars'); bars.innerHTML = '';
+    const tip = $('tip'), chart = $('chart');
+    for (const k of days) {
+      const n = map[k] || 0, b = document.createElement('div');
+      b.className = 'bar' + (n ? '' : ' zero');
+      b.innerHTML = `<i style="height:${Math.max(1.5, 100 * n / max)}%"></i>`;
+      const label = new Date(k + 'T12:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+      b.setAttribute('aria-label', `${label} : ${n} installation(s)`);
+      b.addEventListener('mouseenter', () => { tip.textContent = `${label} · ${n} installation${n > 1 ? 's' : ''}`; tip.style.opacity = 1; });
+      b.addEventListener('mousemove', e => { const r = chart.getBoundingClientRect(); tip.style.left = (e.clientX - r.left) + 'px'; tip.style.top = (e.clientY - r.top) + 'px'; });
+      b.addEventListener('mouseleave', () => tip.style.opacity = 0);
+      b.addEventListener('click', () => { tip.textContent = `${label} · ${n} installation${n > 1 ? 's' : ''}`; tip.style.opacity = 1; const r = chart.getBoundingClientRect(), br = b.getBoundingClientRect(); tip.style.left = (br.left + br.width / 2 - r.left) + 'px'; tip.style.top = (br.top - r.top + 20) + 'px'; });
+      bars.appendChild(b);
+    }
+    const short = k => new Date(k + 'T12:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+    $('ax0').textContent = short(days[0]); $('ax1').textContent = "aujourd'hui";
+    const v = Object.entries(d.versions || {}).sort((a, b) => b[1] - a[1]);
+    $('versions').innerHTML = v.length ? v.map(([k, n]) => `<tr><td>${k.startsWith('web') ? '🍎 iPhone ' + k : '🤖 Android ' + k}</td><td>${fmt(n)}</td></tr>`).join('')
+      : '<tr><td>Aucune donnée pour l\'instant</td><td></td></tr>';
+  }
+
+  $('go').addEventListener('click', () => load($('code').value.trim().toUpperCase()));
+  $('code').addEventListener('keydown', e => { if (e.key === 'Enter') $('go').click(); });
+  $('logout').addEventListener('click', e => { e.preventDefault(); store.set(''); location.reload(); });
+  const saved = store.get(); if (saved) load(saved);
+</script>
+</body>
+</html>
