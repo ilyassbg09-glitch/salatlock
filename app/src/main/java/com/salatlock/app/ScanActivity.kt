@@ -142,7 +142,7 @@ class ScanActivity : ComponentActivity() {
             } catch (e: Exception) {
                 status.text = "⚠️ Impossible d'ouvrir la caméra"
             }
-        }, mainExecutor)
+        }, androidx.core.content.ContextCompat.getMainExecutor(this))
     }
 
     private fun analyze(img: ImageProxy) {

@@ -193,7 +193,7 @@ class SettingsActivity : ComponentActivity() {
         }
         try {
             if (Build.VERSION.SDK_INT >= 30) {
-                lm.getCurrentLocation(provider, null, mainExecutor) { loc ->
+                lm.getCurrentLocation(provider, null, androidx.core.content.ContextCompat.getMainExecutor(this)) { loc ->
                     if (loc != null) saveLocation(loc.latitude, loc.longitude, "Position GPS")
                 }
             } else {

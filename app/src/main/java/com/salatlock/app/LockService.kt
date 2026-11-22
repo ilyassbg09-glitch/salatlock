@@ -348,7 +348,7 @@ class LockService : Service() {
                 val cb = object : TelephonyCallback(), TelephonyCallback.CallStateListener {
                     override fun onCallStateChanged(state: Int) = onCallState(state)
                 }
-                tm.registerTelephonyCallback(mainExecutor, cb)
+                tm.registerTelephonyCallback(androidx.core.content.ContextCompat.getMainExecutor(this), cb)
                 phoneCallback = cb
             } else {
                 @Suppress("DEPRECATION")
