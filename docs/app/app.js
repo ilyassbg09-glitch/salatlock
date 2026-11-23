@@ -7,6 +7,7 @@ const SB_URL = 'https://efagehkrrahnjshhvdhp.supabase.co';
 const SB_KEY = 'sb_publishable_zsoHntdsdW6lfKKK6HHsIw_mWlpSzgc'; // clé publique
 const SITE = 'https://ilyassbg09-glitch.github.io/salatlock';
 const APP_URL = SITE + '/app/';
+const VAPID_PUBLIC = ''; // rempli par supabase/deploy-notifs.sh
 const PRAYERS = [
   { k: 'FAJR', fr: 'Fajr', ar: 'الفجر' }, { k: 'DHUHR', fr: 'Dhuhr', ar: 'الظهر' }, { k: 'ASR', fr: 'Asr', ar: 'العصر' },
   { k: 'MAGHRIB', fr: 'Maghrib', ar: 'المغرب' }, { k: 'ISHA', fr: 'Isha', ar: 'العشاء' }];
@@ -142,7 +143,7 @@ const friendly = e => /Failed to fetch|NetworkError|Load failed/i.test(e.message
 async function sync() {
   if (S.lat == null) return;
   const ws = windows(addDays(new Date(), -1), 8).filter(w => S.enabled[w.p]).map(w => ({
-    p: w.p, day: w.day, lock_at: new Date(w.start.getTime() + S.grace * 60000).toISOString(), end_at: w.end.toISOString(),
+    p: w.p, day: w.day, adhan_at: w.start.toISOString(), lock_at: new Date(w.start.getTime() + S.grace * 60000).toISOString(), end_at: w.end.toISOString(),
     cd: Math.max(3, S.countdown), sens: S.sens }));
   try {
     await rpc('ios_register', { p_token: token(), p_windows: ws, p_excused_until: excused() ? new Date(store.get('excusedUntil')).toISOString() : null });
@@ -164,6 +165,31 @@ async function flush() {
     q = store.get('queue', []).filter(x => !(x[0] === d && x[1] === p)); store.set('queue', q);
   }
   if (excused()) await rpc('record_excused', { p_day: dayKey(new Date()) }).catch(() => {});
+}
+
+
+// ---------------------------------------------------------------- notifications (Web Push)
+const pushSupported = () => !!VAPID_PUBLIC && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+const isStandalone = () => navigator.standalone || matchMedia('(display-mode: standalone)').matches;
+function b64u(s) { const p = '='.repeat((4 - s.length % 4) % 4), b = atob((s + p).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(b, c => c.charCodeAt(0)); }
+async function pushState() {
+  if (!pushSupported()) return 'unsupported';
+  if (Notification.permission === 'denied') return 'denied';
+  const reg = await navigator.serviceWorker.ready; const sub = await reg.pushManager.getSubscription();
+  return sub ? 'on' : 'off';
+}
+async function enablePush() {
+  if (!isStandalone()) return toast("Ajoute d'abord l'app à l'écran d'accueil (Partager → Sur l'écran d'accueil)");
+  if (!pushSupported()) return toast('Notifications non disponibles sur cet iPhone (iOS 16.4 minimum)');
+  const perm = await Notification.requestPermission();
+  if (perm !== 'granted') return toast('Notifications refusées. Tu peux les autoriser dans Réglages › Notifications › Salat Lock');
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = (await reg.pushManager.getSubscription()) || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u(VAPID_PUBLIC) });
+    await sync();
+    await rpc('push_subscribe', { p_token: token(), p_sub: sub.toJSON() }, false);
+    store.set('pushOn', true); toast('🔔 Notifications activées !');
+  } catch (e) { toast('Erreur : ' + friendly(e)); }
 }
 
 // ---------------------------------------------------------------- adhan
@@ -246,10 +272,12 @@ function home() {
     ${!lock ? `<button class="btn" id="pray">🚰 Je vais prier maintenant</button>` : ''}
     <div class="tiles2"><div><div class="v">🔥 ${streak()}</div><div class="muted small">jours d'affilée</div></div><div><div class="v">🤲 ${store.get('total', 0)}</div><div class="muted small">prières faites</div></div></div>
     ${excused() ? `<div class="card"><b style="color:var(--gold)">🌙 Mode dispense actif</b><div class="muted">Aucun blocage pendant cette période.</div></div>` : ''}
+    ${pushSupported() && isStandalone() && !store.get('pushOn') ? `<div class="card" style="border:2px solid var(--gold)"><b>🔔 Sois prévenu à l'heure de la prière</b><p class="muted" style="margin:6px 0 0">Une notification à chaque adhan.</p><button class="btn" id="push">Activer les notifications</button></div>` : ''}
     ${!store.get('shortcutOk') ? `<div class="card" style="border:2px solid var(--gold)"><b>⚙️ Dernière étape : le Raccourci</b><p class="muted" style="margin:6px 0 0">C'est lui qui bloque TikTok, Instagram… à l'heure de la prière.</p><button class="btn" id="sc">Configurer le Raccourci (5 min)</button></div>` : ''}`);
   document.body.dataset.s = 'home';
   on('pray', 'click', () => { const w = lock || currentWindow(); if (!w) return toast('Aucune prière en cours'); if (isDone(w.day, w.p)) return toast(PR[w.p].fr + ' est déjà faite ✅'); screenScan(w, false); });
   on('sc', 'click', screenShortcut);
+  on('push', 'click', () => enablePush().then(home));
   const iv = setInterval(() => { const el = document.getElementById('left'); if (el && nx) { el.textContent = left(); if (nx.start - Date.now() <= 0) home(); } }, 1000);
   cleanup.push(() => clearInterval(iv));
 }
@@ -262,11 +290,13 @@ function screenMore() {
     ${row('eng', '📜', 'Mon engagement', c ? 'Signé le ' + esc(c.date) : '')}
     ${row('exc', '🌙', 'Mode dispense', excused() ? 'Actif' : 'Règles, maladie, voyage…')}
     <p class="sec">Application</p>
+    ${pushSupported() ? row('pn', '🔔', 'Notifications', store.get('pushOn') ? 'Activées ✅' : 'Être prévenu à chaque adhan') : ''}
     ${row('sc2', '📲', 'Le Raccourci', store.get('shortcutOk') ? 'Configuré ✅' : 'À configurer pour bloquer les applis')}
     ${row('set', '⚙️', 'Réglages', 'Ville, horaires, blocage')}
     ${row('adh', '🔊', 'Écouter l’adhan', 'Un adhan différent chaque jour')}
     ${row('share', '📤', 'Partager l’app', 'Envoie Salat Lock à un proche')}
     <p class="muted center small" style="margin-top:22px">Salat Lock ${VERSION} · sans pub · aucune donnée personnelle</p>`);
+  on('pn', 'click', () => enablePush().then(screenMore));
   on('eng', 'click', () => screenContract(true)); on('exc', 'click', screenExcused); on('sc2', 'click', screenShortcut); on('set', 'click', () => screenSettings(false));
   on('adh', 'click', () => { if (audio) { stopAdhan(); toast('Adhan arrêté'); } else { playAdhan(); toast('🔊 Adhan… appuie encore pour arrêter'); } });
   on('share', 'click', () => { const d = { title: 'Salat Lock', text: "Le téléphone se bloque tant que tu n'as pas prié 🕌 Gratuit, sans pub :", url: SITE };
@@ -576,5 +606,11 @@ function gateFinish(ok, err, cd) {
   }
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
   home(); sync();
+  if (new URLSearchParams(location.search).get('adhan')) {
+    history.replaceState(null, '', location.pathname);
+    const b = document.createElement('button'); b.className = 'btn'; b.textContent = "🔊 Écouter l'adhan";
+    b.style.cssText = 'position:fixed;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom) + 20px);width:auto;z-index:9;box-shadow:0 10px 30px rgba(0,0,0,.4)';
+    b.onclick = () => { playAdhan(); b.remove(); }; document.body.appendChild(b); setTimeout(() => b.remove(), 60000);
+  }
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { sync(); if (document.body.dataset.s === 'home') home(); } });
 })();
