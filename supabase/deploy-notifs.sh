@@ -35,7 +35,7 @@ rm -f /tmp/sl_secrets.json
 echo "  ✓ secrets enregistrés sur Supabase"
 
 echo "3/5 Fonction d'envoi"
-$CLI functions deploy push --project-ref "$REF" --no-verify-jwt --use-api --workdir . > /tmp/sl_deploy.log 2>&1 || { cat /tmp/sl_deploy.log; exit 1; }
+$CLI functions deploy push --project-ref "$REF" --no-verify-jwt --use-api --workdir . --yes > /tmp/sl_deploy.log 2>&1 || { cat /tmp/sl_deploy.log; exit 1; }
 echo "  ✓ fonction « push » déployée"
 
 echo "4/5 Minuteur : vérification chaque minute"

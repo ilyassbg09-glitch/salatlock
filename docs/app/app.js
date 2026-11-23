@@ -7,7 +7,7 @@ const SB_URL = 'https://efagehkrrahnjshhvdhp.supabase.co';
 const SB_KEY = 'sb_publishable_zsoHntdsdW6lfKKK6HHsIw_mWlpSzgc'; // clé publique
 const SITE = 'https://ilyassbg09-glitch.github.io/salatlock';
 const APP_URL = SITE + '/app/';
-const VAPID_PUBLIC = ''; // rempli par supabase/deploy-notifs.sh
+const VAPID_PUBLIC = 'BG6GuvZrSJNDTffYVaM4XZBXquj-JBHAHKrqaPVIw9pvyJXKPYrC78-TD5S3cfJBpsh-O8rXygqG_DwouYytlaM'; // rempli par supabase/deploy-notifs.sh
 const PRAYERS = [
   { k: 'FAJR', fr: 'Fajr', ar: 'الفجر' }, { k: 'DHUHR', fr: 'Dhuhr', ar: 'الظهر' }, { k: 'ASR', fr: 'Asr', ar: 'العصر' },
   { k: 'MAGHRIB', fr: 'Maghrib', ar: 'المغرب' }, { k: 'ISHA', fr: 'Isha', ar: 'العشاء' }];
