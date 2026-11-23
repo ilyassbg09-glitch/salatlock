@@ -1,6 +1,6 @@
 // Cache hors ligne de l'app (les appels au serveur ne sont jamais mis en cache).
-const CACHE = 'salatlock-web-1.0.0';
-const FILES = ['./', 'index.html', 'style.css', 'app.js', 'manifest.webmanifest', 'icons/icon-180.png', 'icons/icon-192.png',
+const CACHE = 'salatlock-web-1.1.0';
+const FILES = ['./', 'index.html', 'style.css', 'app.js', 'manifest.webmanifest', 'fonts/inter-latin-400-normal.woff2', 'fonts/inter-latin-700-normal.woff2', 'fonts/inter-latin-800-normal.woff2', 'icons/icon-180.png', 'icons/icon-192.png',
   'vendor/adhan.min.js', 'vendor/tf-core.min.js', 'vendor/tf-backend-cpu.min.js', 'vendor/tf-tflite.min.js',
   'vendor/wasm/tflite_web_api_cc.js', 'vendor/wasm/tflite_web_api_cc.wasm', 'vendor/wasm/tflite_web_api_cc_simd.js',
   'vendor/wasm/tflite_web_api_cc_simd.wasm', 'model/sink_model.tflite', 'model/labels.txt'];

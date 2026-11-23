@@ -51,3 +51,41 @@ canvas.sig { width: 100%; height: 190px; background: #fff; border-radius: 16px; 
 #toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 24px); transform: translateX(-50%); background: #0b2a20; border: 1px solid rgba(255,255,255,.12);
   color: #fff; padding: 12px 18px; border-radius: 14px; font-size: 15px; opacity: 0; pointer-events: none; transition: opacity .25s; max-width: 90vw; text-align: center; }
 #toast.on { opacity: 1; }
+
+/* ===================== v2 : police, onglets, nouveaux blocs ===================== */
+@font-face { font-family: Inter; font-weight: 400; font-display: swap; src: url(fonts/inter-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: Inter; font-weight: 700; font-display: swap; src: url(fonts/inter-latin-700-normal.woff2) format('woff2'); }
+@font-face { font-family: Inter; font-weight: 800; font-display: swap; src: url(fonts/inter-latin-800-normal.woff2) format('woff2'); }
+body { font-family: Inter, -apple-system, system-ui, sans-serif; }
+.top { position: sticky; top: 0; z-index: 5; margin: calc(-1 * (env(safe-area-inset-top) + 22px)) -16px 6px; padding: calc(env(safe-area-inset-top) + 14px) 16px 10px;
+  background: linear-gradient(#0B3D2E 70%, rgba(11,61,46,0)); }
+.brand { display: flex; align-items: center; gap: 8px; } .brand b { color: var(--gold); font-size: 22px; font-weight: 800; flex: 1; } .brand small { color: var(--muted); font-size: 12px; }
+.tabbar { display: flex; background: #13392D; border-radius: 22px; padding: 4px; margin-top: 12px; }
+.tabbar button { flex: 1; border: 0; background: none; color: var(--muted); font: 700 11.5px/1.2 Inter, sans-serif; padding: 7px 0; border-radius: 18px; cursor: pointer; }
+.tabbar button span { display: block; font-size: 17px; margin-bottom: 2px; }
+.tabbar button.on { background: var(--gold); color: var(--dark); font-weight: 800; }
+.hero { background: linear-gradient(135deg, #1F6B52, #0F4334); border: 1px solid #2A5A4A; border-radius: 24px; padding: 18px 20px 20px; margin-top: 10px; }
+.hero .k { color: var(--gold); font-size: 12px; font-weight: 800; letter-spacing: .12em; margin-top: 12px; }
+.hero .n { display: flex; align-items: baseline; justify-content: space-between; } .hero .n b { font-size: 34px; font-weight: 800; } .hero .n span { color: var(--gold); font-size: 26px; }
+.hero .w { display: flex; align-items: center; justify-content: space-between; margin-top: 2px; } .hero .w b { font-size: 22px; }
+.pill { background: rgba(0,0,0,.2); border-radius: 16px; padding: 6px 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.chips { display: flex; gap: 6px; margin-top: 12px; }
+.chips div { flex: 1; text-align: center; background: var(--card); border-radius: 18px; padding: 10px 0; }
+.chips div b { display: block; font-size: 16px; } .chips div i { display: block; font-style: normal; font-weight: 700; font-size: 12.5px; margin-top: 2px; } .chips div small { color: var(--muted); font-size: 12px; }
+.chips .done { background: var(--green); } .chips .next { background: var(--gold); color: var(--dark); } .chips .next small { color: var(--dark); } .chips .off { opacity: .45; }
+.tiles2 { display: flex; gap: 10px; margin-top: 14px; } .tiles2 div { flex: 1; background: var(--card); border-radius: 20px; padding: 14px 10px; text-align: center; }
+.tiles2 .v { font-size: 26px; font-weight: 800; color: var(--gold); }
+.menu { display: flex; align-items: center; gap: 12px; background: var(--card); border-radius: 18px; padding: 14px 14px 14px 16px; margin-top: 8px; cursor: pointer; }
+.menu .i { font-size: 22px; width: 32px; text-align: center; } .menu .t { flex: 1; } .menu .t b { display: block; font-size: 16px; } .menu .t small { color: var(--muted); font-size: 13px; } .menu .c { color: var(--muted); font-size: 24px; }
+.sec { color: var(--muted); font-size: 13px; font-weight: 700; margin: 20px 0 0; }
+.seg { display: flex; background: #13392D; border-radius: 22px; padding: 4px; margin-top: 14px; }
+.seg button { flex: 1; border: 0; background: none; color: var(--muted); font: 800 14px Inter, sans-serif; padding: 10px; border-radius: 18px; }
+.seg button.on { background: var(--gold); color: var(--dark); }
+.podium { display: flex; align-items: flex-end; gap: 8px; margin-top: 14px; text-align: center; }
+.podium div { flex: 1; } .podium .m { font-size: 28px; } .podium b { display: block; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.podium .s { color: var(--gold); font-weight: 800; font-size: 13px; } .podium .bar2 { border-radius: 14px; background: var(--card); margin-top: 6px; }
+.podium .p1 .bar2 { background: var(--gold); height: 120px; } .podium .p2 .bar2 { height: 96px; } .podium .p3 .bar2 { height: 80px; } .podium .me .bar2 { background: var(--green); }
+.mecard { background: linear-gradient(135deg, #1F6B52, #0F4334); border: 1px solid #2A5A4A; border-radius: 22px; padding: 16px 18px; margin-top: 8px; }
+.mecard .h { display: flex; align-items: center; } .mecard .h div { flex: 1; } .mecard .h b { font-size: 20px; } .mecard .h .r { color: var(--gold); font-weight: 700; font-size: 14px; } .mecard .h .big2 { color: var(--gold); font-size: 30px; font-weight: 800; }
+.mecard .code { display: flex; align-items: center; background: rgba(0,0,0,.2); border-radius: 14px; padding: 8px 8px 8px 12px; margin-top: 10px; font-weight: 700; } .mecard .code span { flex: 1; }
+.mecard .code button { border: 0; background: none; color: var(--gold); font: 800 13px Inter, sans-serif; padding: 6px 10px; }

@@ -2,7 +2,7 @@
    Même serveur et même classement que l'app Android. */
 'use strict';
 
-const VERSION = 'web-1.0';
+const VERSION = 'web-2.0';
 const SB_URL = 'https://efagehkrrahnjshhvdhp.supabase.co';
 const SB_KEY = 'sb_publishable_zsoHntdsdW6lfKKK6HHsIw_mWlpSzgc'; // clé publique
 const SITE = 'https://ilyassbg09-glitch.github.io/salatlock';
@@ -190,7 +190,7 @@ function screenContract(readOnly) {
     <canvas class="sig" id="sig"></canvas><p class="muted small" style="text-align:right"><a href="#" id="clear" style="color:var(--gold)">Effacer</a></p>
     <label class="chk"><input type="checkbox" id="ok">Je prends cet engagement sincèrement</label>
     <button class="btn" id="sign">🤲 Je m'engage</button>`}`);
-  if (readOnly) return on('close', 'click', home);
+  if (readOnly) return on('close', 'click', back);
   const cv = document.getElementById('sig'), g = cv.getContext('2d');
   const fit = () => { const r = cv.getBoundingClientRect(); cv.width = r.width * 2; cv.height = r.height * 2; g.scale(2, 2); g.lineWidth = 3.2; g.lineCap = g.lineJoin = 'round'; g.strokeStyle = '#10291F'; };
   fit(); let ink = false, drawing = false;
@@ -210,48 +210,67 @@ function screenContract(readOnly) {
   });
 }
 
-// ---------- Accueil ----------
+
+// ---------- En-tête : titre + onglets ----------
+let TAB = 0;
+const TABS = [['🏠', 'Accueil'], ['🏆', 'Classement'], ['🧭', 'Qibla'], ['☰', 'Plus']];
+function shell(tab, inner) {
+  TAB = tab;
+  render(`<div class="top"><div class="brand"><span style="font-size:22px">🕌</span><b>Salat Lock</b><small>${VERSION}</small></div>
+    <div class="tabbar">${TABS.map(([i, n], k) => `<button class="${k === tab ? 'on' : ''}" data-tab="${k}"><span>${i}</span>${n}</button>`).join('')}</div></div>${inner}`);
+  document.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => openTab(+b.dataset.tab)));
+}
+function openTab(k) { [home, () => screenLeaderboard(0), screenQibla, screenMore][k](); }
+const back = () => openTab(TAB);
+
+// ---------- 🏠 Accueil ----------
 function home() {
   if (!store.get('contract')) return screenContract(false);
   if (S.lat == null) return screenSettings(true);
   const cd = store.get('countdown'); if (cd && Date.now() < cd.end) return screenCountdown(cd);
-  const lock = shouldLock(), t = timesFor(new Date()), today = dayKey(new Date()), now = new Date(), nx = nextWindow();
-  const mins = nx ? Math.round((nx.start - now) / 60000) : 0;
+  const lock = shouldLock(), t = timesFor(new Date()), today = dayKey(new Date()), now = new Date(), nx = nextWindow(), cur = currentWindow();
   const standalone = navigator.standalone || matchMedia('(display-mode: standalone)').matches;
-  render(`
-    <h1>🕌 Salat Lock</h1><p class="muted center" style="margin:4px 0 0">Ton téléphone se bloque tant que tu n'as pas prié.</p>
-    ${!standalone ? `<div class="banner">📲 <b>Installe l'app :</b> appuie sur <b>Partager</b> <span style="font-size:18px">⎋</span> puis <b>« Sur l'écran d'accueil »</b>.</div>` : ''}
-    ${!store.get('shortcutOk') ? `<div class="card" style="border:2px solid var(--gold)"><b>⚙️ Dernière étape : le Raccourci</b><p class="muted" style="margin:6px 0 0">C'est lui qui bloque TikTok, Instagram… à l'heure de la prière.</p><button class="btn" id="sc">Configurer le Raccourci (5 min)</button></div>` : ''}
+  const left = () => { const s = Math.max(0, Math.round((nx.start - Date.now()) / 1000)); return s >= 3600 ? `dans ${Math.floor(s / 3600)} h ${pad(Math.floor(s % 3600 / 60))} min` : `dans ${pad(Math.floor(s / 60))}:${pad(s % 60)}`; };
+  shell(0, `
+    ${!standalone ? `<div class="banner">📲 <b>Installe l'app :</b> appuie sur <b>Partager</b> puis <b>« Sur l'écran d'accueil »</b>.</div>` : ''}
     ${lock ? `<div class="card lock" style="border:2px solid var(--gold)"><div class="ar">حان وقت الصلاة</div><b style="font-size:20px">C'est l'heure de ${PR[lock.p].fr}</b>
       <button class="btn" id="pray">🚰 Scanner un lavabo</button></div>` : ''}
-    <div class="card times">
-      <div class="muted">📍 ${esc(S.city || 'Ma position')}</div>
-      ${nx ? `<div style="font-weight:800;font-size:17px;margin:4px 0 8px">Prochaine : ${PR[nx.p].fr} à ${hm(nx.start)} (dans ${mins >= 60 ? Math.floor(mins / 60) + ' h ' + (mins % 60) + ' min' : mins + ' min'})</div>` : ''}
-      ${PRAYERS.map(p => `<div class="t"><span>${!S.enabled[p.k] ? '⚪' : isDone(today, p.k) ? '✅' : t[p.k] <= now ? '⏳' : '🕐'} ${p.fr} <span class="muted">${p.ar}</span></span><b>${hm(t[p.k])}</b></div>`).join('')}
-      <div class="muted small" style="margin-top:6px">Lever du soleil ${hm(t.sunrise)} · blocage ${S.grace} min après l'adhan</div>
-    </div>
-    <div class="card stats"><div><div class="v">🔥 ${streak()}</div><div class="muted">jours d'affilée</div></div><div><div class="v">🤲 ${store.get('total', 0)}</div><div class="muted">prières faites</div></div></div>
-    ${excused() ? `<div class="card"><b style="color:var(--gold)">🌙 Mode dispense actif</b><div class="muted">Aucun blocage pendant cette période.</div></div>` : ''}
+    <div class="hero"><div class="muted">📍 ${esc(S.city || 'Ma position')}</div>
+      ${nx ? `<div class="k">PROCHAINE PRIÈRE</div><div class="n"><b>${PR[nx.p].fr}</b><span>${PR[nx.p].ar}</span></div>
+      <div class="w"><b>${hm(nx.start)}</b><span class="pill" id="left">${left()}</span></div>` : ''}
+      ${cur && S.enabled[cur.p] && !isDone(cur.day, cur.p) ? `<div style="color:var(--gold);font-weight:700;margin-top:12px">⏳ ${PR[cur.p].fr} n'est pas encore faite</div>` : ''}</div>
+    <div class="chips">${PRAYERS.map(p => { const done = isDone(today, p.k), isNext = nx && nx.p === p.k && nx.day === today;
+      const c = !S.enabled[p.k] ? 'off' : done ? 'done' : isNext ? 'next' : '';
+      return `<div class="${c}"><b>${!S.enabled[p.k] ? '–' : done ? '✓' : t[p.k] <= now ? '!' : '•'}</b><i>${p.fr}</i><small>${hm(t[p.k])}</small></div>`; }).join('')}</div>
+    <p class="muted center small" style="margin:8px 0 0">Lever du soleil ${hm(t.sunrise)} · blocage ${S.grace} min après l'adhan</p>
     ${!lock ? `<button class="btn" id="pray">🚰 Je vais prier maintenant</button>` : ''}
-    <button class="btn" id="lb">🏆 Classement en ligne</button>
-    <div class="row"><button class="btn alt" id="qibla">🧭 Qibla</button><button class="btn alt" id="adhan">🔊 Adhan</button></div>
-    <div class="row"><button class="btn alt" id="set">⚙️ Réglages</button><button class="btn alt" id="sc2">📲 Raccourci</button></div>
-    <button class="btn alt" id="exc">🌙 Mode dispense (règles, maladie…)</button>
-    <button class="btn alt" id="eng">📜 Mon engagement</button>
-    <button class="btn alt" id="share">📤 Partager l'app à un proche</button>
-    <p class="muted center small" style="margin-top:18px">Version ${VERSION} · sans pub · sans pistage</p>`);
+    <div class="tiles2"><div><div class="v">🔥 ${streak()}</div><div class="muted small">jours d'affilée</div></div><div><div class="v">🤲 ${store.get('total', 0)}</div><div class="muted small">prières faites</div></div></div>
+    ${excused() ? `<div class="card"><b style="color:var(--gold)">🌙 Mode dispense actif</b><div class="muted">Aucun blocage pendant cette période.</div></div>` : ''}
+    ${!store.get('shortcutOk') ? `<div class="card" style="border:2px solid var(--gold)"><b>⚙️ Dernière étape : le Raccourci</b><p class="muted" style="margin:6px 0 0">C'est lui qui bloque TikTok, Instagram… à l'heure de la prière.</p><button class="btn" id="sc">Configurer le Raccourci (5 min)</button></div>` : ''}`);
+  document.body.dataset.s = 'home';
   on('pray', 'click', () => { const w = lock || currentWindow(); if (!w) return toast('Aucune prière en cours'); if (isDone(w.day, w.p)) return toast(PR[w.p].fr + ' est déjà faite ✅'); screenScan(w, false); });
-  on('lb', 'click', () => screenLeaderboard(0));
-  on('qibla', 'click', screenQibla);
-  on('adhan', 'click', () => { if (audio) { stopAdhan(); toast('Adhan arrêté'); } else playAdhan(); });
-  on('set', 'click', () => screenSettings(false));
-  on('sc', 'click', screenShortcut); on('sc2', 'click', screenShortcut);
-  on('eng', 'click', () => screenContract(true));
-  on('exc', 'click', screenExcused);
+  on('sc', 'click', screenShortcut);
+  const iv = setInterval(() => { const el = document.getElementById('left'); if (el && nx) { el.textContent = left(); if (nx.start - Date.now() <= 0) home(); } }, 1000);
+  cleanup.push(() => clearInterval(iv));
+}
+
+// ---------- ☰ Plus ----------
+function screenMore() {
+  const c = store.get('contract');
+  const row = (id, i, t, s) => `<div class="menu" id="${id}"><span class="i">${i}</span><span class="t"><b>${t}</b><small>${s}</small></span><span class="c">›</span></div>`;
+  shell(3, `<p class="sec">Mon compte</p>
+    ${row('eng', '📜', 'Mon engagement', c ? 'Signé le ' + esc(c.date) : '')}
+    ${row('exc', '🌙', 'Mode dispense', excused() ? 'Actif' : 'Règles, maladie, voyage…')}
+    <p class="sec">Application</p>
+    ${row('sc2', '📲', 'Le Raccourci', store.get('shortcutOk') ? 'Configuré ✅' : 'À configurer pour bloquer les applis')}
+    ${row('set', '⚙️', 'Réglages', 'Ville, horaires, blocage')}
+    ${row('adh', '🔊', 'Écouter l’adhan', 'Un adhan différent chaque jour')}
+    ${row('share', '📤', 'Partager l’app', 'Envoie Salat Lock à un proche')}
+    <p class="muted center small" style="margin-top:22px">Salat Lock ${VERSION} · sans pub · aucune donnée personnelle</p>`);
+  on('eng', 'click', () => screenContract(true)); on('exc', 'click', screenExcused); on('sc2', 'click', screenShortcut); on('set', 'click', () => screenSettings(false));
+  on('adh', 'click', () => { if (audio) { stopAdhan(); toast('Adhan arrêté'); } else { playAdhan(); toast('🔊 Adhan… appuie encore pour arrêter'); } });
   on('share', 'click', () => { const d = { title: 'Salat Lock', text: "Le téléphone se bloque tant que tu n'as pas prié 🕌 Gratuit, sans pub :", url: SITE };
     navigator.share ? navigator.share(d).catch(() => {}) : (navigator.clipboard.writeText(SITE), toast('Lien copié')); });
-  document.body.dataset.s = 'home';
-  const iv = setInterval(() => { if (document.visibilityState === 'visible') home(); }, 60000); cleanup.push(() => clearInterval(iv));
 }
 
 // ---------- Scan du lavabo ----------
@@ -283,7 +302,7 @@ async function screenScan(w, gate, sens = S.sens, cdMin = S.countdown) {
     <p class="center" style="font-weight:800;font-size:18px;margin:12px 0 0" id="st">Chargement de la caméra…</p>
     <div class="bar"><i id="bar"></i></div><p class="center muted small" id="seen"></p>
     <p class="center muted small">Astuce : recule un peu pour avoir tout le lavabo dans le cadre, avec de la lumière.</p>`);
-  on('back', 'click', () => gate ? gateScreen() : home());
+  on('back', 'click', () => gate ? gateScreen() : back());
   const v = document.getElementById('v'), st = document.getElementById('st');
   let stream = null, alive = true, progress = 0;
   cleanup.push(() => { alive = false; if (stream) stream.getTracks().forEach(t => t.stop()); });
@@ -383,15 +402,16 @@ function startCompass() {
   } else startListen();
 }
 function screenQibla() {
-  render(`<button class="back" id="back">‹ Retour</button><h1>🧭 Qibla</h1>${compassHTML()}
-    <p class="center" id="qtxt"></p><div class="card muted">• Appuie sur la boussole pour l'activer (iPhone demande l'autorisation).<br>• Tiens le téléphone à plat.<br>• Éloigne-toi des aimants, enceintes et ordinateurs.<br>• Si la flèche bouge bizarrement : fais un 8 dans l'air avec ton téléphone.</div>`);
-  on('back', 'click', home); startCompass();
+  shell(2, `<h2 class="center" style="color:#fff;font-size:20px">Direction de la Qibla</h2>${compassHTML()}
+    ${qiblaDeg() != null ? `<div class="center" style="font-size:40px;font-weight:800;color:var(--gold)">${Math.round(qiblaDeg())}°</div><p class="center muted" style="margin:0">depuis le nord · ${esc(S.city || 'ma position')}</p>` : ''}
+    <p class="center" id="qtxt"></p>
+    <div class="card"><b style="color:var(--gold)">Conseils</b><div class="muted" style="margin-top:6px">• Appuie sur la boussole pour l'activer (l'iPhone demande l'autorisation).<br>• Tiens le téléphone à plat.<br>• Éloigne-toi des aimants, enceintes et ordinateurs.<br>• Si la flèche bouge bizarrement : fais un 8 dans l'air avec ton téléphone.</div></div>`);
+  startCompass();
 }
 
 // ---------- Classement ----------
 async function screenLeaderboard(tab) {
-  render(`<button class="back" id="back">‹ Retour</button><h1>🏆 Classement</h1><p class="muted center">Android et iPhone · un seul classement</p><div id="lbz"><p class="center muted">Chargement…</p></div>`);
-  on('back', 'click', home);
+  shell(1, `<div id="lbz"><p class="center muted">Chargement…</p></div>`);
   let prof = null, rows = [], err = null;
   try {
     await flush().catch(() => {});
@@ -399,17 +419,20 @@ async function screenLeaderboard(tab) {
     store.set('hasProfile', !!prof);
     rows = await rpc(tab === 1 && prof ? 'friends_leaderboard' : 'global_leaderboard', tab === 1 && prof ? {} : { p_limit: 100 });
   } catch (e) { err = friendly(e); }
-  const z = document.getElementById('lbz'); if (!z) return;
+  const z = document.getElementById('lbz'); if (!z || TAB !== 1) return;
+  const podium = tab === 0 && rows.length >= 3;
+  const medal = r => ['🥇', '🥈', '🥉'][r.rank - 1] || r.rank;
   z.innerHTML = `${err ? `<p class="center" style="color:var(--red)">⚠️ ${esc(err)}</p>` : ''}
-    ${!prof ? `<div class="card"><b>Rejoins le classement 🔥</b><p class="muted">Choisis un pseudo. Pas d'e-mail, pas de numéro : seuls ton pseudo, ta série et ton nombre de prières sont envoyés.</p>
+    ${!prof ? `<div class="card" style="border:2px solid var(--gold)"><b style="font-size:19px">Rejoins le classement 🔥</b><p class="muted">Choisis un pseudo. Pas d'e-mail, pas de numéro : seuls ton pseudo, ta série et ton nombre de prières sont envoyés.</p>
       <input id="ps" maxlength="20" placeholder="Pseudo (3 à 20 caractères)"><button class="btn" id="join">Rejoindre</button></div>` : `
-      <div class="card"><b style="font-size:20px">${esc(prof.pseudo)}</b><div style="color:var(--gold);font-weight:800">Rang #${prof.rank} sur ${prof.players}</div>
-      <div class="stats" style="margin-top:10px"><div><div class="v">🔥 ${prof.streak}</div><div class="muted">série</div></div><div><div class="v">🏅 ${prof.best_streak}</div><div class="muted">record</div></div><div><div class="v">🤲 ${prof.total}</div><div class="muted">prières</div></div></div>
-      <div class="row" style="margin-top:8px"><span>Mon code ami : <b>${esc(prof.friend_code)}</b></span><button class="btn alt" id="shc" style="flex:0 0 auto;width:auto;margin:0;padding:10px 14px">📤</button></div></div>`}
-    <div class="tabs"><button class="btn ${tab === 0 ? '' : 'alt'}" id="t0">🌍 Mondial</button><button class="btn ${tab === 1 ? '' : 'alt'}" id="t1">👥 Amis</button></div>
+      <div class="mecard"><div class="h"><div><b>${esc(prof.pseudo)}</b><div class="r">Rang #${prof.rank} sur ${prof.players}</div></div><span class="big2">#${prof.rank}</span></div>
+      <div class="stats" style="margin-top:12px"><div><div class="v" style="font-size:20px">🔥 ${prof.streak}</div><div class="muted small">série</div></div><div><div class="v" style="font-size:20px">🏅 ${prof.best_streak}</div><div class="muted small">record</div></div><div><div class="v" style="font-size:20px">🤲 ${prof.total}</div><div class="muted small">prières</div></div></div>
+      <div class="code"><span>Code ami : ${esc(prof.friend_code)}</span><button id="shc">📤 Partager</button></div></div>`}
+    <div class="seg"><button class="${tab === 0 ? 'on' : ''}" id="t0">🌍 Mondial</button><button class="${tab === 1 ? 'on' : ''}" id="t1">👥 Amis</button></div>
     ${tab === 1 && prof ? `<div class="copy" style="margin-top:12px"><input id="fc" placeholder="Code ami (6 caractères)" style="text-transform:uppercase"><button id="add">Ajouter</button></div>` : ''}
-    <div class="card lb">${rows.length ? rows.map(r => `<div class="r ${r.is_me ? 'me' : ''}" data-p="${esc(r.pseudo)}"><span class="n">${['🥇', '🥈', '🥉'][r.rank - 1] || '#' + r.rank}</span><span class="p">${esc(r.pseudo)}${r.is_me ? ' (moi)' : ''}</span><span class="s">🔥 ${r.streak}</span><span class="c">${r.total}</span></div>`).join('')
-      : `<p class="muted center">${tab === 0 ? 'Personne pour l’instant. Sois le premier ! 🥇' : 'Ajoute des amis avec leur code 👆'}</p>`}</div>
+    ${podium ? `<div class="podium">${[[rows[1], 2], [rows[0], 1], [rows[2], 3]].map(([r, k]) => `<div class="p${k} ${r.is_me ? 'me' : ''}"><div class="m">${['🥇', '🥈', '🥉'][k - 1]}</div><b>${esc(r.pseudo)}</b><div class="s">🔥 ${r.streak}</div><div class="bar2"></div></div>`).join('')}</div>` : ''}
+    ${(podium ? rows.slice(3) : rows).length ? `<div class="card lb">${(podium ? rows.slice(3) : rows).map(r => `<div class="r ${r.is_me ? 'me' : ''}" data-p="${esc(r.pseudo)}"><span class="n">${medal(r)}</span><span class="p">${esc(r.pseudo)}${r.is_me ? ' (moi)' : ''}</span><span class="s">🔥 ${r.streak}</span><span class="c">${r.total}</span></div>`).join('')}</div>`
+      : !rows.length ? `<p class="muted center">${tab === 0 ? 'Personne pour l’instant. Sois le premier ! 🥇' : 'Ajoute des amis avec leur code 👆'}</p>` : ''}
     <p class="muted small">La série 🔥 compte les jours d'affilée avec les 5 prières faites. Les jours de dispense ne la cassent pas.${tab === 1 ? ' Appui long sur un ami pour le retirer.' : ''}</p>
     ${prof ? `<p class="center"><a href="#" id="del" style="color:var(--red);font-size:13px">Supprimer mon profil</a></p>` : ''}`;
   on('t0', 'click', () => screenLeaderboard(0));
@@ -451,8 +474,8 @@ function screenSettings(first) {
     <button class="btn" id="save">${first ? 'Continuer' : 'Enregistrer'}</button>
     <h2>🎙️ Crédits des adhans</h2><p class="muted small">Enregistrements libres de droits (Wikimedia Commons) : « Beautiful adhan » — Adam-synagda — CC0 ; « Azan » — Andrewler — CC BY-SA 4.0 (coupé avant la dua) ; « The Adhan » — Atcovi (récitation d'Aaqib Azeez) — CC BY-SA 4.0. Versions modifiées sous CC BY-SA 4.0.</p>
     <h2>ℹ️ Confidentialité</h2><p class="muted small">Pour que le Raccourci sache quand bloquer, tes horaires de prière (calculés sur le téléphone) sont envoyés avec un code aléatoire, sans nom ni position exacte. Le classement n'envoie que ton pseudo, ta série et ton nombre de prières, et seulement si tu le rejoins. Un compteur anonyme d'installations est aussi envoyé.</p>`);
+  if (!first) on('back', 'click', back);
   const setLoc = (lat, lng, city) => { S.lat = lat; S.lng = lng; S.city = city; document.getElementById('loc').textContent = `Actuelle : ${city} (${lat.toFixed(3)}, ${lng.toFixed(3)})`; toast('Position enregistrée : ' + city); };
-  on('back', 'click', home);
   on('gps', 'click', () => navigator.geolocation ? navigator.geolocation.getCurrentPosition(p => setLoc(p.coords.latitude, p.coords.longitude, 'Ma position'),
     () => toast('Position refusée : choisis ta ville dans la liste'), { enableHighAccuracy: false, timeout: 15000 }) : toast('Position indisponible'));
   on('city', 'change', e => { const c = e.target.value; if (c) setLoc(CITIES[c][0], CITIES[c][1], c); });
@@ -462,14 +485,14 @@ function screenSettings(first) {
     S.method = document.getElementById('meth').value; S.hanafi = document.getElementById('han').checked;
     S.grace = +document.getElementById('gr').value; S.countdown = Math.max(3, +document.getElementById('cd').value); S.sens = +document.getElementById('se').value;
     document.querySelectorAll('[data-p]').forEach(c => S.enabled[c.dataset.p] = c.checked);
-    saveSettings(); sync(); toast('Enregistré ✅'); home();
+    saveSettings(); sync(); toast('Enregistré ✅'); first ? home() : back();
   });
 }
 
 function screenExcused() {
   render(`<button class="back" id="back">‹ Retour</button><h1>🌙 Mode dispense</h1><p class="muted center">Règles, maladie, voyage… Aucun blocage pendant la période choisie.</p>
     ${[1, 3, 5, 7, 10].map(n => `<button class="btn alt" data-n="${n}">${n} jour${n > 1 ? 's' : ''}</button>`).join('')}<button class="btn red" data-n="0">Désactiver le mode dispense</button>`);
-  on('back', 'click', home);
+  on('back', 'click', back);
   document.querySelectorAll('[data-n]').forEach(b => b.addEventListener('click', () => {
     const n = +b.dataset.n; store.set('excusedUntil', n ? Date.now() + n * 864e5 : 0); sync(); toast(n ? `Dispense pour ${n} jour(s)` : 'Mode dispense désactivé'); home(); }));
 }
@@ -499,7 +522,7 @@ function screenShortcut() {
     <p class="muted small">Après « Tester », ouvre une des applis cochées : Salat Lock doit s'ouvrir. Le test s'arrête tout seul après 2 minutes.</p>
     <button class="btn alt" id="done">✅ C'est configuré</button>
     <p class="muted small">⚠️ Garde ces liens pour toi : ils contiennent ton code personnel.</p>`);
-  on('back', 'click', home);
+  on('back', 'click', back);
   document.querySelectorAll('[data-c]').forEach(b => b.addEventListener('click', () => { const i = document.getElementById(b.dataset.c); i.select();
     (navigator.clipboard ? navigator.clipboard.writeText(i.value) : Promise.reject()).then(() => toast('Lien copié ✅')).catch(() => { document.execCommand('copy'); toast('Lien copié ✅'); }); }));
   on('test', 'click', async () => {
