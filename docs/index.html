@@ -103,9 +103,17 @@
       <p class="ar">حافظوا على الصلوات</p>
       <h1>Ton téléphone se bloque <span>tant que tu n'as pas prié.</span></h1>
       <p class="lead">À l'heure de la prière, Salat Lock bloque ton téléphone. Pour le débloquer : fais tes ablutions, scanne un lavabo, et prie pendant le compte à rebours.</p>
+      <div id="ios" style="display:none">
+        <a class="btn" href="app/">🍎 Installer sur iPhone</a>
+        <ol class="small" style="text-align:left;margin:14px auto 0;max-width:30em;padding-left:22px;line-height:1.7">
+          <li>Ouvre ce lien dans <b>Safari</b></li>
+          <li>Appuie sur <b>Partager</b> (carré avec une flèche ⬆️)</li>
+          <li>Choisis <b>« Sur l'écran d'accueil »</b>, puis ouvre l'app depuis l'icône</li>
+        </ol>
+      </div>
       <a class="btn" href="SalatLock.apk" download id="dl">⬇️ Télécharger pour Android</a>
-      <a class="btn ghost" href="app/" style="margin-top:10px">🍎 Version iPhone</a>
-      <p class="small">Gratuit · <span id="ver">Version 2.0</span> · 16 Mo · Android 8 ou plus récent · iPhone iOS 17+</p>
+      <a class="btn ghost" href="app/" style="margin-top:10px" id="iosalt">🍎 Version iPhone</a>
+      <p class="small">Gratuit · <span id="ver">Version 2.0</span> · Android 8 ou plus récent · iPhone iOS 16.4+</p>
       <div class="badges">
         <span class="badge">🚫 Sans pub</span><span class="badge">🔒 Aucune donnée personnelle</span>
         <span class="badge">📴 Marche sans internet</span><span class="badge">🇫🇷 En français</span>
@@ -196,6 +204,14 @@
 <footer class="wrap">Salat Lock · Fait avec ❤️ · Sans pub · Adhans : Adam-synagda (CC0), Andrewler et Atcovi (CC BY-SA 4.0), via Wikimedia Commons</footer>
 
 <script>
+  // iPhone / iPad : on met en avant l'installation iPhone.
+  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (isIOS) {
+    document.getElementById('ios').style.display = 'block';
+    const dl = document.getElementById('dl'); dl.classList.add('ghost'); dl.style.marginTop = '12px'; dl.textContent = '🤖 Version Android';
+    document.getElementById('iosalt').style.display = 'none';
+    document.querySelectorAll('.cta a.btn[download]').forEach(a => { a.href = 'app/'; a.removeAttribute('download'); a.textContent = '🍎 Installer sur iPhone'; });
+  }
   // Affiche la version publiée et active le bouton de partage.
   fetch('version.json?t=' + Date.now()).then(r => r.json()).then(v => {
     document.getElementById('ver').textContent = 'Version ' + v.versionName;
