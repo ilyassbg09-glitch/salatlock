@@ -23,10 +23,11 @@ import kotlin.math.sqrt
  */
 class QiblaView(ctx: Context) : View(ctx), SensorEventListener {
     private val prefs = Prefs(ctx)
-    private val sm = ctx.getSystemService(SensorManager::class.java)
+    private val sm: SensorManager? = try { ctx.getSystemService(SensorManager::class.java) } catch (_: Throwable) { null }
     val qibla = if (prefs.hasLocation) PrayerCalc.qiblaBearing(prefs.lat, prefs.lng).toFloat() else Float.NaN
-    private val declination = if (prefs.hasLocation)
-        GeomagneticField(prefs.lat.toFloat(), prefs.lng.toFloat(), 0f, System.currentTimeMillis()).declination else 0f
+    private val declination = try {
+        if (prefs.hasLocation) GeomagneticField(prefs.lat.toFloat(), prefs.lng.toFloat(), 0f, System.currentTimeMillis()).declination else 0f
+    } catch (_: Throwable) { 0f }
     private var sinA = 0f
     private var cosA = 1f
     private var first = true
@@ -49,11 +50,13 @@ class QiblaView(ctx: Context) : View(ctx), SensorEventListener {
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        sm.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)?.let { sm.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME) }
-        sm.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)?.let { sm.registerListener(this, it, SensorManager.SENSOR_DELAY_UI) }
+        try {
+            sm?.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)?.let { sm.registerListener(this, it, SensorManager.SENSOR_DELAY_GAME) }
+            sm?.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)?.let { sm.registerListener(this, it, SensorManager.SENSOR_DELAY_UI) }
+        } catch (_: Throwable) {}
     }
 
-    override fun onDetachedFromWindow() { sm.unregisterListener(this); super.onDetachedFromWindow() }
+    override fun onDetachedFromWindow() { try { sm?.unregisterListener(this) } catch (_: Throwable) {}; super.onDetachedFromWindow() }
 
     override fun onSensorChanged(e: SensorEvent) {
         if (e.sensor.type == Sensor.TYPE_MAGNETIC_FIELD) {

@@ -5,7 +5,7 @@ import java.time.LocalDate
 
 /** Tous les réglages et l'état de l'app, stockés sur le téléphone. */
 class Prefs(ctx: Context) {
-    private val sp = ctx.applicationContext.getSharedPreferences("salat", Context.MODE_PRIVATE)
+    private val sp = MemPrefs.of(ctx, "salat")
 
     private fun dbl(k: String) = sp.getString(k, null)?.toDoubleOrNull() ?: Double.NaN
 

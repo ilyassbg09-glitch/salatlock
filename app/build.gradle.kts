@@ -3,6 +3,7 @@ import java.util.Properties
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("app.cash.paparazzi")
 }
 
 android {
@@ -13,7 +14,7 @@ android {
         applicationId = "com.salatlock.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 3
+        versionCode = 4
         versionName = "2.0"
         // Adresse du site où l'app vérifie s'il existe une nouvelle version.
         val site = (project.findProperty("salatlock.site") as String?) ?: "https://REPLACE_ME.github.io/salatlock"
@@ -59,4 +60,5 @@ dependencies {
     implementation("androidx.camera:camera-view:$camerax")
     implementation("org.tensorflow:tensorflow-lite:2.16.1")
     implementation("com.batoulapps.adhan:adhan:1.2.1")
+    testImplementation("junit:junit:4.13.2")
 }

@@ -15,7 +15,7 @@ object UpdateChecker {
     private const val EVERY_MS = 6 * 3600_000L
 
     fun cached(ctx: Context): Update? {
-        val sp = ctx.getSharedPreferences("update", Context.MODE_PRIVATE)
+        val sp = MemPrefs.of(ctx, "update")
         val code = sp.getInt("code", 0)
         if (code <= BuildConfig.VERSION_CODE) return null
         return Update(sp.getString("name", "") ?: "", sp.getString("url", "") ?: "", sp.getString("notes", "") ?: "")
@@ -24,7 +24,7 @@ object UpdateChecker {
     /** À appeler depuis l'écran d'accueil ; [onFound] est rappelé sur le fil principal. */
     fun check(ctx: Context, force: Boolean = false, onFound: (Update) -> Unit) {
         val app = ctx.applicationContext
-        val sp = app.getSharedPreferences("update", Context.MODE_PRIVATE)
+        val sp = MemPrefs.of(app, "update")
         if (BuildConfig.SITE_URL.contains("REPLACE_ME")) return
         if (!force && System.currentTimeMillis() - sp.getLong("last", 0) < EVERY_MS) return
         Thread {

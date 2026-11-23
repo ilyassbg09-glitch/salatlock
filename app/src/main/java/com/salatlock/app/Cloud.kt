@@ -38,7 +38,7 @@ object Cloud {
         else -> "Erreur : ${e.message}"
     }
 
-    private fun sp(ctx: Context) = ctx.applicationContext.getSharedPreferences("cloud", Context.MODE_PRIVATE)
+    private fun sp(ctx: Context) = MemPrefs.of(ctx, "cloud")
 
     fun installId(ctx: Context): String {
         val s = sp(ctx)
